@@ -13,6 +13,7 @@ import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
+
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -29,35 +30,75 @@ migrate = Migrate(app, db)
 # Models.
 #----------------------------------------------------------------------------#
 
+# many-to-many relationships here for genres - Done
+# OK, next thing to do is to try to insert some data into the database
+genre_venues = db.Table('genre_venues',
+    db.Column('genre_id', db.Integer, db.ForeignKey('genre.id'), primary_key=True),
+    db.Column('venue_id', db.Integer, db.ForeignKey('venue.id'), primary_key=True)
+)
+genre_artists = db.Table('genre_artists',
+    db.Column('genre_id', db.Integer, db.ForeignKey('genre.id'), primary_key=True),
+    db.Column('artist_id', db.Integer, db.ForeignKey('artist.id'), primary_key=True)
+)
+
+
 class Venue(db.Model):
-    __tablename__ = 'Venue'
+    __tablename__ = 'venue'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
+    name = db.Column(db.String(120))
+    city_id = db.Column(db.Integer, db.ForeignKey('city.id'), nullable=False)
     address = db.Column(db.String(120))
     phone = db.Column(db.String(120))
+    website_link = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
+    shows = db.relationship('Show', backref='venue', lazy=True)
 
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
 class Artist(db.Model):
-    __tablename__ = 'Artist'
+    __tablename__ = 'artist'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
+    name = db.Column(db.String(120))
+    address = db.Column(db.String(120))
+    city_id = db.Column(db.Integer, db.ForeignKey('city.id'), nullable=False)
     phone = db.Column(db.String(120))
-    genres = db.Column(db.String(120))
+    website_link = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
+    shows = db.relationship('Show', backref='artist', lazy=True)
 
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
-# TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
+class City(db.Model):
+    __tablename__ = 'city'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120))
+    state = db.Column(db.String(120))
+    venues = db.relationship('Venue', backref='city', lazy=True)
+    artists = db.relationship('Artist', backref='city', lazy=True)
+
+
+class Genre(db.Model):
+  __tablename__ = 'genre'
+
+  id = db.Column(db.Integer, primary_key=True)
+  name = db.Column(db.String(120))
+  venues = db.relationship('Venue', secondary=genre_venues,
+      backref=db.backref('genres', lazy=True))
+  artists = db.relationship('Artist', secondary=genre_artists,
+      backref=db.backref('genres', lazy=True))
+
+
+class Show(db.Model):
+    __tablename__ = 'show'
+
+    id = db.Column(db.Integer, primary_key=True)
+    venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'), nullable=False)
+    artist_id = db.Column(db.Integer, db.ForeignKey('artist.id'), nullable=False)
+    date_time = db.Column(db.DateTime)
+
 
 #----------------------------------------------------------------------------#
 # Filters.
