@@ -86,3 +86,10 @@ class Show(db.Model):
     venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'), nullable=False)
     artist_id = db.Column(db.Integer, db.ForeignKey('artist.id'), nullable=False)
     start_time = db.Column(db.DateTime)
+
+
+class SearchResults:
+
+    def __init__(self, data=[]):
+        self.data = data
+        self.count = len(data)
