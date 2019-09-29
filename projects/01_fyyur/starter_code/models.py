@@ -1,8 +1,8 @@
+from app import db
+
 #----------------------------------------------------------------------------#
 # Models.
 #----------------------------------------------------------------------------#
-
-from app import db
 
 genre_venues = db.Table('genre_venues',
     db.Column('genre_id', db.Integer, db.ForeignKey('genre.id'), primary_key=True),
