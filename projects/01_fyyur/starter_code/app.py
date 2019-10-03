@@ -1,9 +1,6 @@
 # Notes: 
-# - Finished the initial relationships
-# - Need to deal with Shows
-# - Messages on artist and venue pages seeking talent , seeking message
-# - Definitely change attributes to matach what's below
-
+# - Do I need to do a query for past/upcoming shows?
+# - Unique constraints on columns?
 
 #----------------------------------------------------------------------------#
 # Imports
@@ -34,13 +31,13 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 #----------------------------------------------------------------------------#
-# Models.
+# Models
 #----------------------------------------------------------------------------#
 
 from models import *
 
 #----------------------------------------------------------------------------#
-# Filters.
+# Filters
 #----------------------------------------------------------------------------#
 
 def format_datetime(date, format='medium'):
@@ -98,7 +95,6 @@ def show_venue(venue_id):
     data.upcoming_shows = []
     data.upcoming_shows_count = 0 
   
-
   return render_template('pages/show_venue.html', venue=data)
 
 #  ----------------------------------------------------------------
@@ -112,24 +108,43 @@ def create_venue_form():
 
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
-  # TODO: insert form data as a new Venue record in the db, instead
-  # TODO: modify data to be the data object returned from db insertion
+  # DONE: insert form data as a new Venue record in the db, instead
+  # DONE: modify data to be the data object returned from db insertion
+  new_venue = Venue(name=request.form.get('name'))
+  new_venue.city = City(
+      city=request.form.get('city'),
+      state = request.form.get('state')
+  )
+  new_venue.address = request.form.get('address', '')
+  new_venue.phone = request.form.get('phone', '')
+  new_venue.genres = [Genre(name=genre) for genre in request.form.getlist('genres')]
+  new_venue.facebook_link = request.form.get('facebook_link')
 
-  # on successful db insert, flash success
-  flash('Venue ' + request.form['name'] + ' was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
-  # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+  try:
+      db.session.add(new_venue)
+      db.session.commit()
+      # on successful db insert, flash success
+      flash('Venue ' + request.form['name'] + ' was successfully listed!')
+  except: 
+  # DONE: on unsuccessful db insert, flash an error instead.
+      flash('An error occurred. Venue ' + new_venue.name + ' could not be listed.')
+      # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
   return render_template('pages/home.html')
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
-  # TODO: Complete this endpoint for taking a venue_id, and using
+  # DONE: Complete this endpoint for taking a venue_id, and using
   # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
-
+  venue = Venue.query.get(venue_id)
+  try:
+    db.session.delete(venue)
+    db.session.commit()
+    flash('Venue '+ venue.name + ' was successfully deleted.')
+  except:
+    flash('An error occurred. Venue ' + venue.name + ' could not be listed.')
   # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
   # clicking that button delete it from the db then redirect the user to the homepage
-  return None
+  return render_template('pages/home.html')
 
 #  ----------------------------------------------------------------
 #  Artists
@@ -175,19 +190,8 @@ def show_artist(artist_id):
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
   form = ArtistForm()
-  artist={
-    "id": 4,
-    "name": "Guns N Petals",
-    "genres": ["Rock n Roll"],
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "326-123-5000",
-    "website": "https://www.gunsnpetalsband.com",
-    "facebook_link": "https://www.facebook.com/GunsNPetals",
-    "seeking_venue": True,
-    "seeking_description": "Looking for shows to perform at in the San Francisco Bay Area!",
-    "image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80"
-  }
+  artist = Artist.query.get(artist_id)
+  
   # TODO: populate form with fields from artist with ID <artist_id>
   return render_template('forms/edit_artist.html', form=form, artist=artist)
 

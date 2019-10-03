@@ -18,7 +18,7 @@ class Venue(db.Model):
     __tablename__ = 'venue'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120))
+    name = db.Column(db.String(120), unique=True)
     city_id = db.Column(db.Integer, db.ForeignKey('city.id'), nullable=False)
     address = db.Column(db.String(120))
     phone = db.Column(db.String(120))
@@ -37,7 +37,7 @@ class Artist(db.Model):
     __tablename__ = 'artist'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120))
+    name = db.Column(db.String(120), unique=True)
     address = db.Column(db.String(120))
     city_id = db.Column(db.Integer, db.ForeignKey('city.id'), nullable=False)
     phone = db.Column(db.String(120))
@@ -54,6 +54,9 @@ class Artist(db.Model):
 
 class City(db.Model):
     __tablename__ = 'city'
+    __table_args__ = (
+        db.UniqueConstraint('city', 'state', name='unique_city_state'),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     city = db.Column(db.String(120))
@@ -69,7 +72,7 @@ class Genre(db.Model):
   __tablename__ = 'genre'
 
   id = db.Column(db.Integer, primary_key=True)
-  name = db.Column(db.String(120))
+  name = db.Column(db.String(120), unique=True)
   venues = db.relationship('Venue', secondary=genre_venues,
       backref=db.backref('genres', lazy=True))
   artists = db.relationship('Artist', secondary=genre_artists,
@@ -81,6 +84,9 @@ class Genre(db.Model):
 
 class Show(db.Model):
     __tablename__ = 'show'
+    __table_args__ = (
+        db.UniqueConstraint('artist_id', 'start_time', name='unique_start_time'),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'), nullable=False)
@@ -93,3 +99,4 @@ class SearchResults:
     def __init__(self, data=[]):
         self.data = data
         self.count = len(data)
+
