@@ -1,6 +1,8 @@
 # Notes: 
-# - Do I need to do a query for past/upcoming shows?
-# - Unique constraints on columns?
+# - Add stuff for updating venues
+# - buttones for deleting/editing artists
+# - buttons for deleting/editing venues
+# - buttons for deleteing/editing shows
 
 #----------------------------------------------------------------------------#
 # Imports
@@ -201,7 +203,7 @@ def edit_artist(artist_id):
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
-  # TODO: take values from the form submitted, and update existing
+  # DONE: take values from the form submitted, and update existing
   # artist record with ID <artist_id> using the new attributes
   artist = Artist.query.get(artist_id)
   artist.name = request.form.get('name')
@@ -219,27 +221,34 @@ def edit_artist_submission(artist_id):
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
   form = VenueForm()
-  venue={
-    "id": 1,
-    "name": "The Musical Hop",
-    "genres": ["Jazz", "Reggae", "Swing", "Classical", "Folk"],
-    "address": "1015 Folsom Street",
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "123-123-1234",
-    "website": "https://www.themusicalhop.com",
-    "facebook_link": "https://www.facebook.com/TheMusicalHop",
-    "seeking_talent": True,
-    "seeking_description": "We are on the lookout for a local artist to play every two weeks. Please call us.",
-    "image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60"
-  }
-  # TODO: populate form with values from venue with ID <venue_id>
+  venue = Venue.query.get(venue_id)
+  form.name.data = venue.name
+  form.genres.data = venue.genres
+  form.address.data = venue.address
+  form.city.data = venue.city.city
+  form.state.data = venue.city.state
+  form.phone.data = venue.phone
+  form.image_link.data = venue.image_link
+  form.facebook_link.data = venue.facebook_link
+  # DONE: populate form with values from venue with ID <venue_id>
   return render_template('forms/edit_venue.html', form=form, venue=venue)
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
-  # TODO: take values from the form submitted, and update existing
+  # DONE: take values from the form submitted, and update existing
   # venue record with ID <venue_id> using the new attributes
+  venue = Venue.query.get(venue_id)
+  venue.name = request.form.get('name')
+  venue.genres = [Genre.get_unique(genre) for genre in request.form.getlist('genres')]
+  venue.address = request.form.get('address')
+  venue.city = City.get_unique(
+      city = request.form.get('city'),
+      state = request.form.get('state')
+  )
+  venue.phone = request.form.get('phone')
+  venue.facebook_link = request.form.get('facebook_link')
+  db.session.add(venue)
+  db.session.commit()
   return redirect(url_for('show_venue', venue_id=venue_id))
 
 #  ----------------------------------------------------------------
