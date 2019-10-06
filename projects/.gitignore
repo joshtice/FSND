@@ -1,6 +1,7 @@
 .vscode
 __pycache__
 venv
+projects/01_fyyur/starter_code/venv
 
 # OS generated files #
 ######################
