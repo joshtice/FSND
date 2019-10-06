@@ -111,13 +111,13 @@ def create_venue_submission():
   # DONE: insert form data as a new Venue record in the db, instead
   # DONE: modify data to be the data object returned from db insertion
   new_venue = Venue(name=request.form.get('name'))
-  new_venue.city = City(
+  new_venue.city = City.get_unique(
       city=request.form.get('city'),
       state = request.form.get('state')
   )
   new_venue.address = request.form.get('address', '')
   new_venue.phone = request.form.get('phone', '')
-  new_venue.genres = [Genre(name=genre) for genre in request.form.getlist('genres')]
+  new_venue.genres = [Genre.get_unique(name=genre) for genre in request.form.getlist('genres')]
   new_venue.facebook_link = request.form.get('facebook_link')
 
   try:
@@ -160,7 +160,6 @@ def search_artists():
   # DONE: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
   # search for "band" should return "The Wild Sax Band".
-  
   search_term=request.form.get('search_term', '')
   results = SearchResults(Artist.query.filter(func.lower(Artist.name).contains(search_term.lower())).all())
   return render_template('pages/search_artists.html', results=results, search_term=search_term)
@@ -191,15 +190,30 @@ def show_artist(artist_id):
 def edit_artist(artist_id):
   form = ArtistForm()
   artist = Artist.query.get(artist_id)
-  
-  # TODO: populate form with fields from artist with ID <artist_id>
+  form.name.data = artist.name
+  form.city.data = artist.city.city
+  form.state.data = artist.city.state
+  form.phone.data = artist.phone
+  form.genres.data = ['Alternative', 'Classical'] #[genre.name for genre in artist.genres]
+  form.facebook_link.data = artist.facebook_link
+  # DONE: populate form with fields from artist with ID <artist_id>
   return render_template('forms/edit_artist.html', form=form, artist=artist)
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
   # TODO: take values from the form submitted, and update existing
   # artist record with ID <artist_id> using the new attributes
-
+  artist = Artist.query.get(artist_id)
+  artist.name = request.form.get('name')
+  artist.city = City.get_unique(
+      city=request.form.get('city'),
+      state=request.form.get('state')
+  )
+  artist.phone = request.form.get('phone')
+  artist.genres = [Genre.get_unique(name=genre) for genre in request.form.getlist('genres')]
+  artist.facebook_link = request.form.get('facebook_link')
+  db.session.add(artist)
+  db.session.commit()
   return redirect(url_for('show_artist', artist_id=artist_id))
 
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])

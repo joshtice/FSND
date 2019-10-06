@@ -27,7 +27,7 @@ class Venue(db.Model):
     facebook_link = db.Column(db.String(120))
     seeking_talent = db.Column(db.Boolean)
     seeking_description = db.Column(db.String(500))
-    shows = db.relationship('Show', backref='venue', lazy=True)
+    shows = db.relationship('Show', backref='venue', lazy=True, cascade="all, delete")
 
     def __repr__(self):
         return f"<Venue name='{self.name}'>"
@@ -46,7 +46,7 @@ class Artist(db.Model):
     facebook_link = db.Column(db.String(120))
     seeking_venue = db.Column(db.Boolean)
     seeking_description = db.Column(db.String(500))
-    shows = db.relationship('Show', backref='artist', lazy=True)
+    shows = db.relationship('Show', backref='artist', lazy=True, cascade='all, delete')
 
     def __repr__(self):
         return f"<Artist name='{self.name}'>"
@@ -67,6 +67,13 @@ class City(db.Model):
     def __repr__(self):
         return f"<City city='{self.city}'>"
 
+    @classmethod
+    def get_unique(cls, city, state):
+        obj = cls.query.filter(cls.city == city).filter(cls.state == state).first()
+        if obj is None:
+            obj = cls(city=city, state=state)
+        return obj
+
 
 class Genre(db.Model):
   __tablename__ = 'genre'
@@ -81,11 +88,18 @@ class Genre(db.Model):
   def __repr__(self):
       return f"<Genre name='{self.name}'>"
 
+  @classmethod
+  def get_unique(cls, name):
+      obj = cls.query.filter_by(name=name).first()
+      if obj is None:
+          obj = cls(name=name)
+      return obj
+
 
 class Show(db.Model):
     __tablename__ = 'show'
     __table_args__ = (
-        db.UniqueConstraint('artist_id', 'start_time', name='unique_start_time'),
+        db.UniqueConstraint('artist_id', 'start_time', name='unique_artist_start_time'),
     )
 
     id = db.Column(db.Integer, primary_key=True)
