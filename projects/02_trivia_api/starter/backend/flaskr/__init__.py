@@ -82,6 +82,7 @@ def create_app(test_config=None):
   def delete_question(question_id):
     question = Question.query.get(question_id)
     question.delete()
+    return jsonify(question.format())
 
   '''
   @TODO: 
