@@ -1,6 +1,7 @@
 import os
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
 from flask_cors import CORS
 import random
 
@@ -16,16 +17,28 @@ def create_app(test_config=None):
   '''
   @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
   '''
+  cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
   '''
   @TODO: Use the after_request decorator to set Access-Control-Allow
   '''
+  @app.after_request
+  def after_request(response):
+    response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authoization,true")
+    response.headers.add("Access-Control-Allow-Methods", "GET,PATCH,POST,DELETE,OPTIONS")
+    return response
 
   '''
   @TODO: 
   Create an endpoint to handle GET requests 
   for all available categories.
   '''
+  @app.route('/categories', methods=['GET'])
+  def categories():
+    categories = [category.type for category in Category.query.all()]
+    return jsonify({
+      'categories': categories,
+    })
 
 
   '''
@@ -40,6 +53,23 @@ def create_app(test_config=None):
   ten questions per page and pagination at the bottom of the screen for three pages.
   Clicking on the page numbers should update the questions. 
   '''
+  @app.route('/questions')
+  def questions(methods=['GET']):
+    questions = [question.format() for question in Question.query.all()]
+    total_questions = len(questions)
+    categories = [category.type for category in Category.query.all()]
+    page_num = request.args.get('page', 1, type=int)
+    start_index = (page_num - 1) * QUESTIONS_PER_PAGE
+    end_index = min(
+      len(questions), 
+      page_num * QUESTIONS_PER_PAGE
+    )
+    return jsonify({
+      'questions': questions[start_index:end_index], 
+      'totalQuestions': total_questions,
+      'current_category': 1,
+      'categories': categories,
+    })
 
   '''
   @TODO: 
@@ -48,6 +78,10 @@ def create_app(test_config=None):
   TEST: When you click the trash icon next to a question, the question will be removed.
   This removal will persist in the database and when you refresh the page. 
   '''
+  @app.route('/questions/<int:question_id>')
+  def delete_question(question_id):
+    question = Question.query.get(question_id)
+    question.delete()
 
   '''
   @TODO: 
@@ -59,6 +93,12 @@ def create_app(test_config=None):
   the form will clear and the question will appear at the end of the last page
   of the questions list in the "List" tab.  
   '''
+  @app.route('/add', methods=['POST'])
+  def add_question():
+    submission = request.args
+    new_question = Question(**submission)
+    new_question.insert()
+    return jsonify(new_question.format())
 
   '''
   @TODO: 
@@ -70,6 +110,17 @@ def create_app(test_config=None):
   only question that include that string within their question. 
   Try using the word "title" to start. 
   '''
+  from pprint import pprint
+  @app.route('/questions', methods=['POST'])
+  def search_questions():
+    query = request.json['searchTerm'].lower()
+    hits = Question.query.filter(func.lower(Question.question).contains(query)).all()
+    questions = [question.format() for question in hits]
+    return jsonify({
+      'questions': questions,
+      'total_questions': len(hits),
+      'current_category': 1
+    })
 
   '''
   @TODO: 
@@ -79,7 +130,17 @@ def create_app(test_config=None):
   categories in the left column will cause only questions of that 
   category to be shown. 
   '''
-
+  @app.route('/categories/<int:category>/questions')
+  def category_questions(category, methods=['GET']):
+    questions = [question.format() for question in Question.query.filter_by(category=category).all()]
+    total_questions = len(questions)
+    categories = [category.type for category in Category.query.all()]
+    return jsonify({
+      'questions': questions, 
+      'totalQuestions': total_questions,
+      'current_category': category,
+      'categories': categories,
+    })
 
   '''
   @TODO: 
