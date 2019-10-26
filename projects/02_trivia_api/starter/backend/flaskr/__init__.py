@@ -78,7 +78,7 @@ def create_app(test_config=None):
   TEST: When you click the trash icon next to a question, the question will be removed.
   This removal will persist in the database and when you refresh the page. 
   '''
-  @app.route('/questions/<int:question_id>')
+  @app.route('/questions/<int:question_id>', methods=['DELETE'])
   def delete_question(question_id):
     question = Question.query.get(question_id)
     question.delete()
@@ -95,7 +95,7 @@ def create_app(test_config=None):
   '''
   @app.route('/add', methods=['POST'])
   def add_question():
-    submission = request.args
+    submission = request.json
     new_question = Question(**submission)
     new_question.insert()
     return jsonify(new_question.format())
@@ -110,11 +110,12 @@ def create_app(test_config=None):
   only question that include that string within their question. 
   Try using the word "title" to start. 
   '''
-  from pprint import pprint
   @app.route('/questions', methods=['POST'])
   def search_questions():
     query = request.json['searchTerm'].lower()
-    hits = Question.query.filter(func.lower(Question.question).contains(query)).all()
+    hits = Question.query.filter(
+      func.lower(Question.question).contains(query)
+    ).all()
     questions = [question.format() for question in hits]
     return jsonify({
       'questions': questions,
@@ -132,7 +133,10 @@ def create_app(test_config=None):
   '''
   @app.route('/categories/<int:category>/questions')
   def category_questions(category, methods=['GET']):
-    questions = [question.format() for question in Question.query.filter_by(category=category).all()]
+    questions = [
+      question.format() 
+      for question in Question.query.filter_by(category=category).all()
+    ]
     total_questions = len(questions)
     categories = [category.type for category in Category.query.all()]
     return jsonify({
