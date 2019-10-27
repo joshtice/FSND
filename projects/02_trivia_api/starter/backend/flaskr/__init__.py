@@ -13,6 +13,7 @@ def create_app(test_config=None):
   # create and configure the app
   app = Flask(__name__)
   setup_db(app)
+  random.seed(42)
   
   '''
   @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
@@ -158,6 +159,26 @@ def create_app(test_config=None):
   one question at a time is displayed, the user is allowed to answer
   and shown whether they were correct or not. 
   '''
+  from pprint import pprint
+  @app.route('/quizzes', methods=['POST'])
+  def quizzes():
+    previous_question_ids = request.json['previous_questions']
+    pprint(previous_question_ids)
+    category_id = request.json['quiz_category']['id']
+    if int(category_id) > 0:
+      questions = (
+        Question.query
+        .filter(Question.category==category_id)
+        .filter(~Question.id.in_(previous_question_ids))
+        .all()
+    )
+    else:
+      questions = Question.query.all()
+    if not questions:
+      return jsonify({}) 
+    else:
+      question = random.choice(questions)
+      return jsonify({'question': question.format()})
 
   '''
   @TODO: 
