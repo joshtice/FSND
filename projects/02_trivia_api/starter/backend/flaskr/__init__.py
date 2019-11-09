@@ -88,9 +88,12 @@ def create_app(test_config=None):
 
     @app.route("/questions/<int:question_id>", methods=["DELETE"])
     def delete_question(question_id):
-        question = Question.query.get(question_id)
-        question.delete()
-        return jsonify(question.format())
+        try:
+            question = Question.query.get(question_id)
+            question.delete()
+            return jsonify(question.format())
+        except:
+            abort(422)
 
     """
     @TODO: 
@@ -106,9 +109,12 @@ def create_app(test_config=None):
     @app.route("/add", methods=["POST"])
     def add_question():
         submission = request.json
-        new_question = Question(**submission)
-        new_question.insert()
-        return jsonify(new_question.format())
+        try:
+            new_question = Question(**submission)
+            new_question.insert()
+            return jsonify(new_question.format())
+        except:
+            abort(422)
 
     """
     `@TODO: 
@@ -123,18 +129,21 @@ def create_app(test_config=None):
 
     @app.route("/questions", methods=["POST"])
     def search_questions():
-        query = request.json["searchTerm"].lower()
-        hits = Question.query.filter(
-            func.lower(Question.question).contains(query)
-        ).all()
-        questions = [question.format() for question in hits]
-        return jsonify(
-            {
-                "questions": questions,
-                "total_questions": len(hits),
-                "current_category": 1,
-            }
-        )
+        try:
+            query = request.json["searchTerm"].lower()
+            hits = Question.query.filter(
+                func.lower(Question.question).contains(query)
+            ).all()
+            questions = [question.format() for question in hits]
+            return jsonify(
+                {
+                    "questions": questions,
+                    "total_questions": len(hits),
+                    "current_category": 1,
+                }
+            )
+        except:
+            abort(422)
 
     """
     @TODO: 
@@ -144,7 +153,7 @@ def create_app(test_config=None):
     categories in the left column will cause only questions of that 
     category to be shown. 
     """
-  
+
     @app.route("/categories/<int:category>/questions")
     def category_questions(category, methods=["GET"]):
         questions = [
@@ -173,26 +182,27 @@ def create_app(test_config=None):
     one question at a time is displayed, the user is allowed to answer
     and shown whether they were correct or not. 
     """
-    from pprint import pprint
 
     @app.route("/quizzes", methods=["POST"])
     def quizzes():
-        previous_question_ids = request.json["previous_questions"]
-        pprint(previous_question_ids)
-        category_id = request.json["quiz_category"]["id"]
-        if int(category_id) > 0:
-            questions = (
-                Question.query.filter(Question.category == category_id)
-                .filter(~Question.id.in_(previous_question_ids))
-                .all()
-            )
-        else:
-            questions = Question.query.all()
-        if not questions:
-            return jsonify({})
-        else:
-            question = random.choice(questions)
-            return jsonify({"question": question.format()})
+        try:
+            previous_question_ids = request.json["previous_questions"]
+            category_id = request.json["quiz_category"]["id"]
+            if int(category_id) > 0:
+                questions = (
+                    Question.query.filter(Question.category == category_id)
+                    .filter(~Question.id.in_(previous_question_ids))
+                    .all()
+                )
+            else:
+                questions = Question.query.all()
+            if not questions:
+                return jsonify({})
+            else:
+                question = random.choice(questions)
+                return jsonify({"question": question.format()})
+        except:
+            abort(422)
 
     """
     @TODO: 
@@ -201,23 +211,14 @@ def create_app(test_config=None):
     """
 
     @app.errorhandler(404)
-    def not_found():
-        return (
-            jsonify({
-              "success": False, 
-              "error": 404, 
-              "message": "Not found"}), 
-            404
-        )
+    def not_found(error):
+        return (jsonify({"success": False, "error": 404, "message": "Not found"}), 404)
 
     @app.errorhandler(422)
-    def unprocessable():
+    def unprocessable(error):
         return (
-            jsonify({
-              "success": False, 
-              "error": 422, 
-              "message": "Not processable"}),
-            422
+            jsonify({"success": False, "error": 422, "message": "Not processable"}),
+            422,
         )
 
     return app

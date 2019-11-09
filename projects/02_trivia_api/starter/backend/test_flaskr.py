@@ -8,6 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flaskr import create_app
 from models import setup_db, Question, Category
 
+
 def refresh_test_db():
     try:
         subprocess.run(["dropdb", "trivia_test"])
@@ -15,6 +16,7 @@ def refresh_test_db():
         pass
     subprocess.run(["createdb", "trivia_test"])
     subprocess.run(["psql", "trivia_test", "-f", "trivia.psql"])
+
 
 class TriviaTestCase(unittest.TestCase):
     """This class represents the trivia test case"""
@@ -58,7 +60,6 @@ class TriviaTestCase(unittest.TestCase):
         }
         response = self.client().get("/categories")
         result = json.loads(response.data)
-
         self.assertEqual(response.status_code, 200)
         self.assertEqual(result, expected)
 
@@ -155,10 +156,8 @@ class TriviaTestCase(unittest.TestCase):
             ],
             "totalQuestions": 19,
         }
-
         response = self.client().get("/questions")
         result = json.loads(response.data)
-
         self.assertEqual(response.status_code, 200)
         self.assertEqual(result, expected)
 
@@ -166,26 +165,23 @@ class TriviaTestCase(unittest.TestCase):
         data = {
             "question": "test question",
             "answer": "test answer",
-            "difficulty": 1, 
+            "difficulty": 1,
             "category": 1,
         }
         expected = {
             "id": 24,
             "question": "test question",
             "answer": "test answer",
-            "difficulty": 1, 
+            "difficulty": 1,
             "category": 1,
         }
         response = self.client().post(
-            "/add",
-            data=json.dumps(data),
-            content_type="application/json"
+            "/add", data=json.dumps(data), content_type="application/json"
         )
         result = json.loads(response.data)
-
         self.assertEqual(response.status_code, 200)
         self.assertEqual(result, expected)
-    
+
     def delete_question(self):
         expected = {
             "id": 24,
@@ -194,18 +190,113 @@ class TriviaTestCase(unittest.TestCase):
             "difficulty": 1,
             "category": 1,
         }
-        response = self.client().delete(
-            "questions/24"
-        )
+        response = self.client().delete("questions/24")
         result = json.loads(response.data)
-
         self.assertEqual(response.status_code, 200)
         self.assertEqual(result, expected)
-    
+
     def test_add_delete(self):
         self.add_question()
         self.delete_question()
-    
+
+    def test_search_questions(self):
+        expected = {
+            "current_category": 1,
+            "questions": [
+                {
+                    "answer": "Muhammad Ali",
+                    "category": 4,
+                    "difficulty": 1,
+                    "id": 9,
+                    "question": "What boxer's original name is Cassius Clay?",
+                }
+            ],
+            "total_questions": 1,
+        }
+        response = self.client().post(
+            "/questions",
+            data=json.dumps({"searchTerm": "boxer"}),
+            content_type="application/json",
+        )
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(result, expected)
+
+    def test_category_questions(self):
+        expected = {
+            "categories": [
+                "Science",
+                "Art",
+                "Geography",
+                "History",
+                "Entertainment",
+                "Sports",
+            ],
+            "current_category": 1,
+            "questions": [
+                {
+                    "answer": "The Liver",
+                    "category": 1,
+                    "difficulty": 4,
+                    "id": 20,
+                    "question": "What is the heaviest organ in the human body?",
+                },
+                {
+                    "answer": "Alexander Fleming",
+                    "category": 1,
+                    "difficulty": 3,
+                    "id": 21,
+                    "question": "Who discovered penicillin?",
+                },
+                {
+                    "answer": "Blood",
+                    "category": 1,
+                    "difficulty": 4,
+                    "id": 22,
+                    "question": "Hematology is a branch of medicine involving the study of what?",
+                },
+            ],
+            "totalQuestions": 3,
+        }
+        response = self.client().get("/categories/1/questions")
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(result, expected)
+
+    def test_quizzes(self):
+        expected = {
+            "question": {
+                "answer": "Blood",
+                "category": 1,
+                "difficulty": 4,
+                "id": 22,
+                "question": "Hematology is a branch of medicine involving the study of what?",
+            }
+        }
+        response = self.client().post(
+            "quizzes",
+            data=json.dumps({"previous_questions": [], "quiz_category": {"id": 1}}),
+            content_type="application/json",
+        )
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(result, expected)
+
+    def test_not_found(self):
+        expected = {"success": False, "error": 404, "message": "Not found"}
+        response = self.client().get("/non_existent_endpoint")
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(result, expected)
+
+    def test_unprocessable(self):
+        expected = {"success": False, "error": 422, "message": "Not processable"}
+        response = self.client().post(
+            "/add", data="{}", content_type="application/json"
+        )
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(result, expected)
 
 
 # Make the tests conveniently executable
