@@ -306,3 +306,9 @@ POST /quizzes
   }
 }
 ```
+
+## Authors
+This project was completed in part by Joshua Tice, with significant contributions from the team at Udacity
+
+## Acknowledgements
+Many thanks to Udacity for the starter code for this project
