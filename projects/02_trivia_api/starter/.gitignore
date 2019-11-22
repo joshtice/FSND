@@ -1,6 +1,8 @@
 .vscode
 __pycache__
 venv
+frontend/node_modules
+backend/trivia_test
 
 # OS generated files #
 ######################
