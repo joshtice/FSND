@@ -12,7 +12,7 @@ from models import setup_db, Question, Category
 def refresh_test_db():
     try:
         subprocess.run(["dropdb", "trivia_test"])
-    except:
+    except Exception:
         pass
     subprocess.run(["createdb", "trivia_test"])
     subprocess.run(["psql", "trivia_test", "-f", "trivia.psql"])
@@ -41,11 +41,6 @@ class TriviaTestCase(unittest.TestCase):
     def tearDown(self):
         """Executed after each test"""
         pass
-
-    """
-    TODO
-    Write at least one test for each test for successful operation and for expected errors.
-    """
 
     def test_categories(self):
         expected = {
@@ -80,8 +75,8 @@ class TriviaTestCase(unittest.TestCase):
                     "category": 4,
                     "difficulty": 2,
                     "id": 5,
-                    "question": "Whose autobiography is entitled 'I Know Why the "
-                    "Caged Bird Sings'?",
+                    "question": "Whose autobiography is entitled "
+                    "'I Know Why the Caged Bird Sings'?",
                 },
                 {
                     "answer": "Muhammad Ali",
@@ -95,41 +90,41 @@ class TriviaTestCase(unittest.TestCase):
                     "category": 5,
                     "difficulty": 4,
                     "id": 2,
-                    "question": "What movie earned Tom Hanks his third straight "
-                    "Oscar nomination, in 1996?",
+                    "question": "What movie earned Tom Hanks his third "
+                    "straight Oscar nomination, in 1996?",
                 },
                 {
                     "answer": "Tom Cruise",
                     "category": 5,
                     "difficulty": 4,
                     "id": 4,
-                    "question": "What actor did author Anne Rice first denounce, "
-                    "then praise in the role of her beloved Lestat?",
+                    "question": "What actor did author Anne Rice first "
+                    "denounce, then praise in the role of her beloved Lestat?",
                 },
                 {
                     "answer": "Edward Scissorhands",
                     "category": 5,
                     "difficulty": 3,
                     "id": 6,
-                    "question": "What was the title of the 1990 fantasy directed "
-                    "by Tim Burton about a young man with multi-bladed "
-                    "appendages?",
+                    "question": "What was the title of the 1990 fantasy "
+                    "directed by Tim Burton about a young man with "
+                    "multi-bladed appendages?",
                 },
                 {
                     "answer": "Brazil",
                     "category": 6,
                     "difficulty": 3,
                     "id": 10,
-                    "question": "Which is the only team to play in every soccer "
-                    "World Cup tournament?",
+                    "question": "Which is the only team to play in every "
+                    "soccer World Cup tournament?",
                 },
                 {
                     "answer": "Uruguay",
                     "category": 6,
                     "difficulty": 4,
                     "id": 11,
-                    "question": "Which country won the first ever soccer World Cup "
-                    "in 1930?",
+                    "question": "Which country won the first ever soccer "
+                    "World Cup in 1930?",
                 },
                 {
                     "answer": "George Washington Carver",
@@ -150,8 +145,8 @@ class TriviaTestCase(unittest.TestCase):
                     "category": 3,
                     "difficulty": 3,
                     "id": 14,
-                    "question": "In which royal palace would you find the Hall of "
-                    "Mirrors?",
+                    "question": "In which royal palace would you find the "
+                    "Hall of Mirrors?",
                 },
             ],
             "totalQuestions": 19,
@@ -160,6 +155,16 @@ class TriviaTestCase(unittest.TestCase):
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(result, expected)
+
+        expected_failure = {
+            "success": False,
+            "error": 405,
+            "message": "Not allowed",
+        }
+        response_failure=self.client().delete("/questions")
+        result_failure = json.loads(response_failure.data)
+        self.assertEqual(response_failure.status_code, 405)
+        self.assertEqual(result_failure, expected_failure)
 
     def add_question(self):
         data = {
@@ -182,6 +187,20 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(result, expected)
 
+        expected_failure = {
+            "success": False,
+            "error": 422,
+            "message": "Not processable",
+        }
+        response_failure=self.client().post(
+            "/add",
+            data=json.dumps({}),
+            content_type="application/json"
+        )
+        result_failure = json.loads(response_failure.data)
+        self.assertEqual(response_failure.status_code, 422)
+        self.assertEqual(result_failure, expected_failure)
+
     def delete_question(self):
         expected = {
             "id": 24,
@@ -194,6 +213,16 @@ class TriviaTestCase(unittest.TestCase):
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(result, expected)
+
+        expected_failure = {
+            "success": False,
+            "error": 422,
+            "message": "Not processable",
+        }
+        response_failure=self.client().delete("/questions/1000")
+        result_failure = json.loads(response_failure.data)
+        self.assertEqual(response_failure.status_code, 422)
+        self.assertEqual(result_failure, expected_failure)
 
     def test_add_delete(self):
         self.add_question()
@@ -216,11 +245,25 @@ class TriviaTestCase(unittest.TestCase):
         response = self.client().post(
             "/questions",
             data=json.dumps({"searchTerm": "boxer"}),
-            content_type="application/json",
+            content_type="application/json"
         )
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(result, expected)
+
+        expected_failure = {
+            "success": False,
+            "error": 422,
+            "message": "Not processable",
+        }
+        response_failure=self.client().post(
+            "/questions",
+            data=json.dumps({}),
+            content_type="application/json"
+        )
+        result_failure = json.loads(response_failure.data)
+        self.assertEqual(response_failure.status_code, 422)
+        self.assertEqual(result_failure, expected_failure)
 
     def test_category_questions(self):
         expected = {
@@ -239,7 +282,8 @@ class TriviaTestCase(unittest.TestCase):
                     "category": 1,
                     "difficulty": 4,
                     "id": 20,
-                    "question": "What is the heaviest organ in the human body?",
+                    "question": "What is the heaviest organ in the human "
+                    "body?",
                 },
                 {
                     "answer": "Alexander Fleming",
@@ -253,7 +297,8 @@ class TriviaTestCase(unittest.TestCase):
                     "category": 1,
                     "difficulty": 4,
                     "id": 22,
-                    "question": "Hematology is a branch of medicine involving the study of what?",
+                    "question": "Hematology is a branch of medicine involving "
+                    "the study of what?",
                 },
             ],
             "totalQuestions": 3,
@@ -263,6 +308,17 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(result, expected)
 
+
+        expected_failure = {
+            "success": False,
+            "error": 404,
+            "message": "Not found"
+        }
+        response_failure = self.client().get("categories/1000/questions")
+        result_failure = json.loads(response_failure.data)
+        self.assertEqual(response_failure.status_code, 404)
+        self.assertEqual(result_failure, expected_failure)
+
     def test_quizzes(self):
         expected = {
             "question": {
@@ -270,12 +326,16 @@ class TriviaTestCase(unittest.TestCase):
                 "category": 1,
                 "difficulty": 4,
                 "id": 22,
-                "question": "Hematology is a branch of medicine involving the study of what?",
+                "question": "Hematology is a branch of medicine involving the "
+                "study of what?",
             }
         }
         response = self.client().post(
             "quizzes",
-            data=json.dumps({"previous_questions": [], "quiz_category": {"id": 1}}),
+            data=json.dumps({
+                "previous_questions": [],
+                "quiz_category": {"id": 1}
+            }),
             content_type="application/json",
         )
         result = json.loads(response.data)
@@ -283,14 +343,33 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_not_found(self):
-        expected = {"success": False, "error": 404, "message": "Not found"}
+        expected = {
+            "success": False,
+            "error": 404,
+            "message": "Not found",
+        }
         response = self.client().get("/non_existent_endpoint")
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(result, expected)
 
+    def test_not_allowed(self):
+        expected = {
+            "success": False,
+            "error": 405,
+            "message": "Not allowed",
+        }
+        response = self.client().delete("/questions")
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 405)
+        self.assertEqual(result, expected)
+
     def test_unprocessable(self):
-        expected = {"success": False, "error": 422, "message": "Not processable"}
+        expected = {
+            "success": False,
+            "error": 422,
+            "message": "Not processable",
+        }
         response = self.client().post(
             "/add", data="{}", content_type="application/json"
         )
