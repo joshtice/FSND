@@ -73,6 +73,9 @@ def create_app(test_config=None):
 
     @app.route("/questions", methods=["POST"])
     def search_questions():
+        if "searchTerm" not in request.json.keys():
+            abort(422)
+
         try:
             query = request.json["searchTerm"].lower()
             hits = Question.query.filter(
@@ -91,6 +94,9 @@ def create_app(test_config=None):
 
     @app.route("/categories/<int:category>/questions")
     def category_questions(category, methods=["GET"]):
+        if Category.query.filter_by(id=category).first() == None:
+            abort(404)
+
         questions = [
             question.format()
             for question in Question.query.filter_by(category=category).all()
@@ -134,6 +140,14 @@ def create_app(test_config=None):
             "error": 404,
             "message": "Not found"
         }), 404)
+
+    @app.errorhandler(405)
+    def not_allowed(error):
+        return (jsonify({
+            "success": False,
+            "error": 405,
+            "message": "Not allowed",
+        }), 405)
 
     @app.errorhandler(422)
     def unprocessable(error):

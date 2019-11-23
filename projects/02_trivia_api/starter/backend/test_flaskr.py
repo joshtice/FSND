@@ -156,6 +156,16 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(result, expected)
 
+        expected_failure = {
+            "success": False,
+            "error": 405,
+            "message": "Not allowed",
+        }
+        response_failure=self.client().delete("/questions")
+        result_failure = json.loads(response_failure.data)
+        self.assertEqual(response_failure.status_code, 405)
+        self.assertEqual(result_failure, expected_failure)
+
     def add_question(self):
         data = {
             "question": "test question",
@@ -177,6 +187,20 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(result, expected)
 
+        expected_failure = {
+            "success": False,
+            "error": 422,
+            "message": "Not processable",
+        }
+        response_failure=self.client().post(
+            "/add",
+            data=json.dumps({}),
+            content_type="application/json"
+        )
+        result_failure = json.loads(response_failure.data)
+        self.assertEqual(response_failure.status_code, 422)
+        self.assertEqual(result_failure, expected_failure)
+
     def delete_question(self):
         expected = {
             "id": 24,
@@ -189,6 +213,16 @@ class TriviaTestCase(unittest.TestCase):
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(result, expected)
+
+        expected_failure = {
+            "success": False,
+            "error": 422,
+            "message": "Not processable",
+        }
+        response_failure=self.client().delete("/questions/1000")
+        result_failure = json.loads(response_failure.data)
+        self.assertEqual(response_failure.status_code, 422)
+        self.assertEqual(result_failure, expected_failure)
 
     def test_add_delete(self):
         self.add_question()
@@ -211,11 +245,25 @@ class TriviaTestCase(unittest.TestCase):
         response = self.client().post(
             "/questions",
             data=json.dumps({"searchTerm": "boxer"}),
-            content_type="application/json",
+            content_type="application/json"
         )
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(result, expected)
+
+        expected_failure = {
+            "success": False,
+            "error": 422,
+            "message": "Not processable",
+        }
+        response_failure=self.client().post(
+            "/questions",
+            data=json.dumps({}),
+            content_type="application/json"
+        )
+        result_failure = json.loads(response_failure.data)
+        self.assertEqual(response_failure.status_code, 422)
+        self.assertEqual(result_failure, expected_failure)
 
     def test_category_questions(self):
         expected = {
@@ -260,6 +308,17 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(result, expected)
 
+
+        expected_failure = {
+            "success": False,
+            "error": 404,
+            "message": "Not found"
+        }
+        response_failure = self.client().get("categories/1000/questions")
+        result_failure = json.loads(response_failure.data)
+        self.assertEqual(response_failure.status_code, 404)
+        self.assertEqual(result_failure, expected_failure)
+
     def test_quizzes(self):
         expected = {
             "question": {
@@ -287,18 +346,29 @@ class TriviaTestCase(unittest.TestCase):
         expected = {
             "success": False,
             "error": 404,
-            "message": "Not found"
+            "message": "Not found",
         }
         response = self.client().get("/non_existent_endpoint")
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(result, expected)
 
+    def test_not_allowed(self):
+        expected = {
+            "success": False,
+            "error": 405,
+            "message": "Not allowed",
+        }
+        response = self.client().delete("/questions")
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 405)
+        self.assertEqual(result, expected)
+
     def test_unprocessable(self):
         expected = {
             "success": False,
             "error": 422,
-            "message": "Not processable"
+            "message": "Not processable",
         }
         response = self.client().post(
             "/add", data="{}", content_type="application/json"
